@@ -39,6 +39,5 @@ cheater_dependencies/cheater.%.ranks: cheater_dependencies/cheater.%.deps $(OSRA
 
 CHEATERS := $(patsubst %.deps,%.ranks.projects,$(wildcard cheater_dependencies/*.deps))
 
-cheaters_gains.csv: $(CHEATERS)
-	@echo $(CHEATERS)
-	python3 AssembleCheatersGains.py $@ $^
+cheaters_gains.csv: AssembleCheatersGains.py ranks.csv.projects $(CHEATERS)
+	python3 AssembleCheatersGains.py $@ ranks.csv.projects $(CHEATERS)

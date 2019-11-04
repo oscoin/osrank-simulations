@@ -32,16 +32,22 @@ for cheater_csv in sys.argv[3:]:
   cheater_name = cheater_csv.split('.')[1]
 
   # Get relevant data from original and cheater dataframes
-  original_osrank_score = ranks[ranks["Name"]==cheater_name]["Osrank"][0]
+  original_osrank_score = ranks[ranks["Name"]==cheater_name].iloc[0]["Osrank"]
+  cheater_osrank_score = cheater[cheater["Name"]==cheater_name].iloc[0]["Osrank"]
+
   original_rank = ranks.index[ranks['Name']==cheater_name][0] + 1
-  cheater_osrank_score = cheater[cheater["Name"]==cheater_name]["Osrank"][0]
   cheater_rank = cheater.index[cheater['Name']==cheater_name][0] + 1
   
-  row = [cheater_name, original_osrank_score, cheater_osrank_score, original_rank, cheater_rank]
-  print(row)
+  row = {
+    "Name" : cheater_name,
+    "Original Osrank Score" : original_osrank_score,
+    "Cheater Osrank Score" : cheater_osrank_score,
+    "Original Rank" : original_rank,
+    "Cheater Rank" : cheater_rank
+  }
+
   # Add to result set
-  # TODO add ranks
-  compare.loc[-1] = row
+  compare = compare.append(row, ignore_index=True)
 
 compare.to_csv(output_path, index=False)
 print(compare)

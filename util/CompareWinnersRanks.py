@@ -23,7 +23,7 @@ num_projects = int(sys.argv[2])
 
 # Load other params into datafames (no error checking)
 inputs = []
-for path in sys.argv[3:-1]:
+for path in sys.argv[3:]:
   df = pd.read_csv(path, header=None, names=["Name", "Osrank"]).head(num_projects)
   inputs.append({
     "path": path,
