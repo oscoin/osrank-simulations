@@ -9,16 +9,14 @@ import pandas as pd
 import numpy as np
 
 # Get filename after making sure it exists
-if (len(sys.argv) < 2) or not os.path.isfile(sys.argv[1]):
-  exit("Please pass the name of an existing winners csv as the first argument")
+if (len(sys.argv) < 5):
+  exit("Please pass the arguments we require (check the Python code)")
 
-filename = sys.argv[1]
-
-# Get N
-if (len(sys.argv) < 3):
-  exit("Please pass an int for the top N winners as the second argument")
-
+# Get params
+ranks_csv = sys.argv[1]
 n = int(sys.argv[2])
+dependencies_meta_csv = sys.argv[3]
+dependencies_csv = sys.argv[4]
 
 # Ensure output directory exists
 # TODO get from args
@@ -27,20 +25,20 @@ if not os.path.isdir(output_dir):
   os.makedirs(output_dir)
 
 # Load Winners from filename
-winners = pd.read_csv(filename, header=None, index_col=0).head(n)
+winners = pd.read_csv(ranks_csv, header=None, index_col=0).head(n)
 
 # Add Metadata
-metadata = pd.read_csv("../osrank-rs-ecosystems/ecosystems/cargo_dependencies_meta.csv", index_col="NAME")
+metadata = pd.read_csv(dependencies_meta_csv, index_col="NAME")
 winners = winners.join(metadata)
 
 # Load Dependencies, so we can remove dependencies for each winner
-winners_deps = pd.read_csv("../osrank-rs-ecosystems/ecosystems/cargo_dependencies.csv")
+winners_deps = pd.read_csv(dependencies_csv)
 
 # Make one dependency file for each cheater
 for index, row in winners.iterrows():
   dependencies_except_this_winners = winners_deps[winners_deps["FROM_ID"]!=row["ID"]]
 
   # Save to file
-  cheater_filename = output_dir + "/dependencies_except_" + index + ".csv"
+  cheater_filename = output_dir + "/cheater." + index + ".deps"
   dependencies_except_this_winners.to_csv(cheater_filename, index=False)
   print(cheater_filename)
