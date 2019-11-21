@@ -36,29 +36,22 @@ for path in sys.argv[3:]:
   inputs.append({
     "path": path,
     "dataframe": df,
-    "rank_series": []
+    "num_intersections": []
   })
 
 # Init comparison dataframe
-compare = inputs[0]["dataframe"][["Name"]].copy()
-
-# Build a series for each input, containing ranks of base input's winning projects
-for index, row in inputs[0]['dataframe'].iterrows():
-  for container in inputs:
-    # this returns [] if the value is not present in the column
-    this_rows_rank_in_this_dataframe = container["dataframe"].index[container["dataframe"]['Name']==row['Name']]
-    rank = -1
-    if len(this_rows_rank_in_this_dataframe) > 0:
-      rank = this_rows_rank_in_this_dataframe[0] + 1 # start ranks at 1, not 0
-    
-    # now we're confident our rank is correct, or negative 1
-    container["rank_series"].append(rank)
+N_values = [10, 25, 50, 100, 500]
+compare = pd.DataFrame(index=N_values)
 
 # For each input, add ranks to compare dataframe
-for container in inputs:
-  compare[container["path"]] = container["rank_series"]
-  # TODO make this a command line flag to include or not
-  #compare[container["path"]+"_delta"] = compare[inputs[0]["path"]] - compare[container["path"]]
+for N in N_values:
+  for container in inputs:
+    num_intersections = len(set(inputs[0]["dataframe"].head(N)['Name']).intersection(set(container["dataframe"].head(N)['Name'])))
+    container["num_intersections"].append(num_intersections)
 
-compare.to_csv(output_path, index=False)
+# For each input, add ranks to compare dataframe
+for container in inputs[1:]:
+  compare[container["path"]] = container["num_intersections"]
+
+compare.to_csv(output_path, index=True)
 print("Done, wrote to csv", output_path)
