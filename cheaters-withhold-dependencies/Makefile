@@ -9,7 +9,7 @@ clean:
 
 # Default vars
 R ?= 100
-N ?= 100 # 0 means use all projects
+N ?= 10 # 0 means use all projects
 BIN ?= java -jar
 JAR ?= ../../osrank-java/out/artifacts/osrank_jar/osrank.jar
 COMMON_ARGS ?= metadataFilePath=$(META) contributionsFilePath=$(CONTRIBS) resultsFilePath=$@ projectDependencyWeight=4 projectContributionWeight=1 projectMaintainerWeight=2 accountMaintainerWeight=3 accountContributionWeight=2
@@ -17,6 +17,7 @@ META ?= ../../osrank-rs-ecosystems/ecosystems/cargo_dependencies_meta.csv
 DEPS ?= ../../osrank-rs-ecosystems/ecosystems/cargo_dependencies.csv
 CONTRIBS ?= ../../osrank-rs-ecosystems/ecosystems/cargo_contributions.csv
 COMPARE ?= ../util/CompareWinnersRanks.py
+ASSEMBLE ?= ../util/AssembleCheatersGains.py
 
 # Run osrank with R given in filename
 ranks.csv: $(JAR) $(META) $(DEPS) $(CONTRIBS)
@@ -34,7 +35,7 @@ cheater_dependencies/cheater.%.ranks: cheater_dependencies/cheater.%.deps $(JAR)
 CHEATERS := $(patsubst %.deps,%.ranks,$(wildcard cheater_dependencies/*.deps))
 
 cheater_ranks: $(CHEATERS)
-	echo "Do it!" 
+	@echo "Generated ranks for cheaters." 
 
-cheater_gains.csv: AssembleCheatersGains.py ranks.csv $(CHEATERS)
-	python3 AssembleCheatersGains.py $@ ranks.csv $(CHEATERS)
+cheater_gains.csv: $(ASSEMBLE) ranks.csv $(CHEATERS)
+	python3 $(ASSEMBLE) $@ ranks.csv $(CHEATERS)
