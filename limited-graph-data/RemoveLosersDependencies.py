@@ -23,13 +23,18 @@ dependencies_meta_csv = sys.argv[3]
 dependencies_csv = sys.argv[4]
 output_csv = sys.argv[5]
 
-# Load CSVS
-winners = pd.read_csv(winners_csv, header=None, index_col=0).head(n)
-dependencies_meta = pd.read_csv(dependencies_meta_csv, index_col="NAME")
-dependencies = pd.read_csv(dependencies_csv)
+# Load Winners, add metadata if necessary
+winners = pd.read_csv(winners_csv).head(n)
+if (len(winners.columns) == 2):
+  winners.columns = ['NAME', 'OSRANK']
+  dependencies_meta = pd.read_csv(dependencies_meta_csv, index_col="NAME")
+  # Add Metadata to Winners
+  winners = winners.join(dependencies_meta)
+elif (len(winners.columns) == 3):
+  winners.columns = ['NAME', 'ID', 'OSRANK']
 
-# Add Metadata to Winners
-winners = winners.join(dependencies_meta)
+# Load dependencies
+dependencies = pd.read_csv(dependencies_csv)
 
 # Remove losers' dependency information
 winners_dependencies = dependencies[dependencies["FROM_ID"].isin(winners["ID"])]

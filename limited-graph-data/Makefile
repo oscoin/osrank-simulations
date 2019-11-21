@@ -2,39 +2,41 @@
 .PHONY: all clean
 
 # All!
-all: winners_ranks_compared.csv
+all: ranks_compared.csv intersection_matrix.csv
 
 clean:
 	rm -rf *.csv
 
 # Default vars
-R ?= 10
-N ?= 100
-OSRANK ?= ../osrank-rank
-COMPARE ?= ../util/CompareWinnersRanks.py
-CONTRIBS ?= ../../osrank-rs-ecosystems/ecosystems/cargo_contributions.csv
+R ?= 100
+N ?= 100 # 0 means use all projects
+BIN ?= java -jar
+JAR ?= ../../osrank-java/out/artifacts/osrank_jar/osrank.jar
+COMMON_ARGS ?= metadataFilePath=$(META) contributionsFilePath=$(CONTRIBS) resultsFilePath=$@ projectDependencyWeight=4 projectContributionWeight=1 projectMaintainerWeight=2 accountMaintainerWeight=3 accountContributionWeight=2
+META ?= ../../osrank-rs-ecosystems/ecosystems/cargo_dependencies_meta.csv
 DEPS ?= ../../osrank-rs-ecosystems/ecosystems/cargo_dependencies.csv
-DEPS_META ?= ../../osrank-rs-ecosystems/ecosystems/cargo_dependencies_meta.csv
+CONTRIBS ?= ../../osrank-rs-ecosystems/ecosystems/cargo_contributions.csv
+COMPARE ?= ../util/CompareWinnersRanks.py
+INTERSECTION ?= ../util/IntersectionMatrix.py
 
-# remove contributors from ranked list
-# used by other targets
-%.projects.csv : %.csv
-	grep $< -ve "@" > $@	
+# Comparisons we want to make
+RANKINGS_TO_COMPARE := ranks.csv winners_ranks-1000.csv winners_ranks-500.csv winners_ranks-250.csv winners_ranks-100.csv
 
-# run it and generate csv
-all_ranks.csv: $(OSRANK) $(CONTRIBS) $(DEPS) $(DEPS_META)
-	rm -rf $@
-	RUST_LOG=debug $(OSRANK) -i $(R) --contribs $(CONTRIBS) --deps $(DEPS) --deps-meta $(DEPS_META) --output-path $@
+# Run osrank with R given in filename
+ranks.csv: $(JAR) $(META) $(DEPS) $(CONTRIBS)
+	$(BIN) $(JAR) R=$(R) dependenciesFilePath=$(DEPS) $(COMMON_ARGS)
 
 # Generates dependency list for top X projects
-winners_dependencies-%.csv: all_ranks.projects.csv RemoveLosersDependencies.py $(DEPS_META) $(DEPS)
-	python3 RemoveLosersDependencies.py $< $* $(DEPS_META) $(DEPS) $@
+winners_dependencies-%.csv: ranks.csv RemoveLosersDependencies.py $(META) $(DEPS)
+	python3 RemoveLosersDependencies.py $< $* $(META) $(DEPS) $@
 
 # Generate ranks when we only have limited dependency information
-winners_ranks-%.csv: winners_dependencies-%.csv $(OSRANK) $(CONTRIBS) $(DEPS_META)
-	rm -rf $@
-	RUST_LOG=debug $(OSRANK) -i $(R) --contribs $(CONTRIBS) --deps $< --deps-meta $(DEPS_META) --output-path $@
+winners_ranks-%.csv: winners_dependencies-%.csv $(JAR) $(META) $(CONTRIBS)
+	$(BIN) $(JAR) R=$(R) dependenciesFilePath=$< $(COMMON_ARGS)
 
 # Compare the different ranking lists
-winners_ranks_compared.csv: $(COMPARE) all_ranks.projects.csv winners_ranks-1000.projects.csv winners_ranks-750.projects.csv winners_ranks-500.projects.csv winners_ranks-250.projects.csv winners_ranks-100.projects.csv
-	python3 $(COMPARE) $@ 1000 all_ranks.projects.csv winners_ranks-1000.projects.csv winners_ranks-750.projects.csv winners_ranks-500.projects.csv winners_ranks-250.projects.csv winners_ranks-100.projects.csv
+ranks_compared.csv: $(COMPARE) $(RANKINGS_TO_COMPARE)
+	python3 $(COMPARE) $@ $(N) $(RANKINGS_TO_COMPARE)
+
+intersection_matrix.csv: $(INTERSECTION) $(RANKINGS_TO_COMPARE)
+	python3 $(INTERSECTION) $@ $(N) $(RANKINGS_TO_COMPARE)

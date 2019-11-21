@@ -25,11 +25,16 @@ if not os.path.isdir(output_dir):
   os.makedirs(output_dir)
 
 # Load Winners from filename
-winners = pd.read_csv(ranks_csv, header=None, index_col=0).head(n)
+winners = pd.read_csv(ranks_csv).head(n)
+if (len(winners.columns) == 2):
+  winners.columns = ['NAME', 'OSRANK']
+  dependencies_meta = pd.read_csv(dependencies_meta_csv, index_col="NAME")
+  # Add Metadata to Winners
+  winners = winners.join(dependencies_meta)
+elif (len(winners.columns) == 3):
+  winners.columns = ['NAME', 'ID', 'OSRANK']
 
-# Add Metadata
-metadata = pd.read_csv(dependencies_meta_csv, index_col="NAME")
-winners = winners.join(metadata)
+winners = winners.set_index("NAME")
 
 # Load Dependencies, so we can remove dependencies for each winner
 winners_deps = pd.read_csv(dependencies_csv)

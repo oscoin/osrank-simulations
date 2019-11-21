@@ -3,7 +3,7 @@
 .PHONY: all clean
 
 # All!
-all: ranks_compared.csv
+all: ranks_compared.csv intersection_matrix.csv
 
 clean:
 	rm -rf *.csv
@@ -17,9 +17,10 @@ META ?= ../../osrank-rs-ecosystems/ecosystems/cargo_dependencies_meta.csv
 DEPS ?= ../../osrank-rs-ecosystems/ecosystems/cargo_dependencies.csv
 CONTRIBS ?= ../../osrank-rs-ecosystems/ecosystems/cargo_contributions.csv
 COMPARE ?= ../util/CompareWinnersRanks.py
+INTERSECTION ?= ../util/IntersectionMatrix.py
 
 # Comparisons we want to make
-RANKINGS_TO_COMPARE := ranks_for_r_5.csv ranks_for_r_10.csv ranks_for_r_25.csv ranks_for_r_50.csv ranks_for_r_100.csv ranks_for_r_150.csv ranks_for_r_200.csv ranks_for_r_1000.csv 
+RANKINGS_TO_COMPARE := ranks_for_r_10.csv ranks_for_r_25.csv ranks_for_r_50.csv ranks_for_r_100.csv ranks_for_r_150.csv ranks_for_r_200.csv ranks_for_r_500.csv ranks_for_r_1000.csv 
 
 # Run osrank with R given in filename
 ranks_for_r_%.csv: $(JAR) $(META) $(DEPS) $(CONTRIBS)
@@ -28,3 +29,6 @@ ranks_for_r_%.csv: $(JAR) $(META) $(DEPS) $(CONTRIBS)
 # Compare the different ranking lists
 ranks_compared.csv: $(COMPARE) $(RANKINGS_TO_COMPARE)
 	python3 $(COMPARE) $@ $(N) $(RANKINGS_TO_COMPARE)
+
+intersection_matrix.csv: $(INTERSECTION) $(RANKINGS_TO_COMPARE)
+	python3 $(INTERSECTION) $@ $(N) $(RANKINGS_TO_COMPARE)
