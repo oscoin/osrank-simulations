@@ -19,15 +19,19 @@ ranks = pd.read_csv(ranks_path, index_col="Name")
 downloads = pd.read_csv(downloads_path, index_col="name")
 ranks_with_downloads = ranks.join(downloads)
 
-print(ranks_with_downloads)
-
 # calculate set operations
-intersection = set(ranks.index).intersection(set(downloads.index))
-print("ranks/downloads intersection count", len(intersection))
+intersection_sizes = [10, 25, 50, 100, 1000]
+print("1. intersection count for ranks/downloads")
+print("top N projects, # intersections")
+for size in intersection_sizes:
+  intersection = set(ranks.head(size).index).intersection(set(downloads.head(size).index))
+  print(size, len(intersection), sep=",")
 
-downloads_withtout_ranks = set(downloads.index).difference(set(ranks.index))
-print("downloads without ranks", downloads_withtout_ranks)
+# show top downloads that didnt get ranked (werent part of libraries.io data)
+downloads_without_ranks = list(set(downloads.index).difference(set(ranks.index)))
+print("2. # top cargo downloads without osranks:", len(downloads_without_ranks), "out of", len(downloads))
+#print(*downloads_without_ranks,  sep='\n')
 
 # write to file
 ranks_with_downloads.to_csv(output_path, index=True)
-print("Wrote ranks with downloads to", output_path)
+print("3. Wrote ranks with downloads to", output_path)
